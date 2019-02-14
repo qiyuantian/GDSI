@@ -1,0 +1,661 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>s_GDSI_tutorial</title><meta name="generator" content="MATLAB 9.4"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2019-02-14"><meta name="DC.source" content="s_GDSI_tutorial.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><h2>Contents</h2><div><ul><li><a href="#1">introduction</a></li><li><a href="#2">prepare diffusion data</a></li><li><a href="#3">calculate q-space sampling density nonuniformity correction factor (Fig.4b in [1])</a></li><li><a href="#4">reconstruct 1D PDF profile along a specific direction (Fig.5f in [1])</a></li><li><a href="#5">reconstruct 3D PDF contour at a specific distance (Fig.5j in [1])</a></li><li><a href="#6">reconstruct ODF using direct approach (Fig.9 in [1])</a></li><li><a href="#7">reconstruct ODF using indirect approach (Fig.9 in [1])</a></li></ul></div><h2 id="1">introduction</h2><pre class="codeinput"><span class="comment">% s_GDSI_tutorial.m</span>
+<span class="comment">%</span>
+<span class="comment">%   A tutorial for generalized diffusion spectrum MRI (GDSI) reconstruction.</span>
+<span class="comment">%</span>
+<span class="comment">%   Source code:</span>
+<span class="comment">%       https://github.com/qiyuantian/GDSI/blob/master/s_GDSI_tutorial.m</span>
+<span class="comment">%</span>
+<span class="comment">%   HTML file can be automatically generaged using command:</span>
+<span class="comment">%       publish('s_GDSI_tutorial.m', 'html');</span>
+<span class="comment">%</span>
+<span class="comment">%   Reference:</span>
+<span class="comment">%       [1] Tian Q, Yang G, Leuze C, Rokem A, Edlow BL, McNab JA, Generalized</span>
+<span class="comment">%       Diffusion Spectrum Magnetic Resonance Imaging (GDSI) for Model-free</span>
+<span class="comment">%       Reconstruction of the Ensemble Average Propagator. NeuroImage, 2019;</span>
+<span class="comment">%       189: 497-515.</span>
+<span class="comment">%</span>
+<span class="comment">% (c) Qiyuan Tian, Stanford RSL</span>
+</pre><h2 id="2">prepare diffusion data</h2><pre class="codeinput"><span class="comment">% Load a single voxel from MGH-USC HCP data (pink box in Fig.10 in [1]),</span>
+<span class="comment">% with 40xb=0, 64xb=1k, 64xb=3k, 128xb=5k, 256xb=10k</span>
+clear, clc, close <span class="string">all</span>
+load(<span class="string">'data/multishell_vox.mat'</span>);
+
+mask_b0 = bval == 0;
+b0s = data(mask_b0); <span class="comment">% b0 volumes</span>
+dwis = data(~mask_b0); <span class="comment">% dwi volumes</span>
+
+data = [mean(b0s); dwis]; <span class="comment">% average b0 volumes</span>
+data = data / mean(b0s); <span class="comment">% normalize using b0</span>
+bval = [0; bval(~mask_b0)]; <span class="comment">% new bval</span>
+bvec = [[0, 0, 0]; bvec(~mask_b0, :)]; <span class="comment">% new bvec</span>
+
+<span class="comment">% display data</span>
+figure
+plot(bval, data, <span class="string">'.'</span>);
+grid <span class="string">on</span>;
+title(<span class="string">'multi-shell diffusion signal'</span>);
+xlabel(<span class="string">'b-value (s/mm^2)'</span>);
+ylabel(<span class="string">'normalized signal'</span>);
+</pre><img vspace="5" hspace="5" src="s_GDSI_tutorial_01.png" alt=""> <h2 id="3">calculate q-space sampling density nonuniformity correction factor (Fig.4b in [1])</h2><pre class="codeinput">bval = bval(:); <span class="comment">% column vector</span>
+disp(<span class="string">'double check unique b values are:'</span>);
+disp(unique(bval)); <span class="comment">% note a +/- 50 variance at b=10k</span>
+bval_rnd = round(bval / 200) * 200; <span class="comment">% round up bval</span>
+
+bval_uniq = unique(bval_rnd); <span class="comment">% unique bval</span>
+count = zeros(size(bval_uniq)); <span class="comment">% number of each bval</span>
+<span class="keyword">for</span> ii = 1 : length(bval_uniq)
+    count(ii) = sum(bval == bval_uniq(ii));
+<span class="keyword">end</span>
+
+qval_uniq = sqrt(bval_uniq / max(bval_uniq)); <span class="comment">% nomalize unique qval, q~sqrt(b)</span>
+qval_contour = (qval_uniq(1 : end-1) + qval_uniq(2 : end)) / 2; <span class="comment">% middle contours</span>
+qval_contour = [qval_contour; 2 * qval_uniq(end) - qval_contour(end)]; <span class="comment">% extrapolate one outer contour</span>
+
+qvol_shell = diff(qval_contour .^ 3); <span class="comment">% qspace volume associated with each shell</span>
+qvol_shell = [qval_contour(1) .^ 3; qvol_shell]; <span class="comment">% add in central sphere volume</span>
+
+qvol_shell = qvol_shell / qvol_shell(1); <span class="comment">% normalize central sphere volume to 1</span>
+qvol_samp = qvol_shell ./ count; <span class="comment">% qspace volume associated with a sample on a shell</span>
+
+qvol = zeros(size(bval)); <span class="comment">% qspace volume for each sample (C in Eq.4 in [1])</span>
+<span class="keyword">for</span> ii = 1 : length(bval_uniq)
+    b = bval_uniq(ii);
+    qvol(bval == b) = qvol_samp(ii);
+<span class="keyword">end</span>
+
+<span class="comment">% or can be simply computed using shelldens.m</span>
+<span class="comment">% qvol = shelldens(bval, 200);</span>
+
+<span class="comment">% display correction factor</span>
+figure
+plot(bval_uniq, qvol_samp, <span class="string">'-o'</span>);
+grid <span class="string">on</span>;
+ylim([0, 1]);
+title(<span class="string">'sampling density nonuniformity correction factor'</span>);
+xlabel(<span class="string">'b-value (s/mm^2)'</span>);
+ylabel(<span class="string">'normalized correction factor'</span>);
+</pre><pre class="codeoutput">double check unique b values are:
+           0
+        1000
+        3000
+        5000
+        9950
+       10000
+       10050
+
+</pre><img vspace="5" hspace="5" src="s_GDSI_tutorial_02.png" alt=""> <h2 id="4">reconstruct 1D PDF profile along a specific direction (Fig.5f in [1])</h2><pre class="codeinput">nr = 100;
+rs = linspace(0, 1, nr)'; <span class="comment">% 100 distances btw [0, 1] of MDD of free water</span>
+pdf_dir = [0, 1, 0]; <span class="comment">% A-P direction</span>
+
+rvec = repmat(pdf_dir, [nr, 1]) .* repmat(rs, [1, 3]); <span class="comment">% 100 displacements along A-P direction</span>
+qvec = repmat(sqrt(6 * 0.0025 * bval), [1, 3]) .* bvec;
+F = cos(rvec * qvec') / length(bval); <span class="comment">% Fourier matrix, Eq.5 in [1]</span>
+
+pdf_1d = F * diag(qvol) * data; <span class="comment">% Eq.4 in [1]</span>
+
+pdf_1d_clip = pdf_1d;
+pdf_1d_clip(pdf_1d &lt; 0) = 0; <span class="comment">% clip negative pdf values to 0</span>
+
+pdf_1d_ringfree = pdf_1d;
+ind_negative = find(pdf_1d &lt; 0);
+pdf_1d_ringfree(ind_negative(1):end) = 0; <span class="comment">% set pdf values beyond 1st zero-crossing to 0</span>
+
+<span class="comment">% display pdf profile</span>
+figure, hold <span class="string">all</span>
+plot(rs, pdf_1d, <span class="string">'r'</span>, <span class="string">'LineWidth'</span>, 6);
+plot(rs, pdf_1d_clip, <span class="string">'g'</span>, <span class="string">'LineWidth'</span>, 3);
+plot(rs, pdf_1d_ringfree, <span class="string">'b--'</span>, <span class="string">'LineWidth'</span>, 2);
+grid <span class="string">on</span>;
+legend(<span class="string">'original'</span>, <span class="string">'negative clip'</span>, <span class="string">'1st zero-xing clip'</span>)
+title([<span class="string">'pdf profile along direction '</span> mat2str(pdf_dir)]);
+xlabel(<span class="string">'ratio of mean displacement distance of free water'</span>);
+ylabel(<span class="string">'diffusion probability density'</span>);
+</pre><img vspace="5" hspace="5" src="s_GDSI_tutorial_03.png" alt=""> <h2 id="5">reconstruct 3D PDF contour at a specific distance (Fig.5j in [1])</h2><pre class="codeinput">[x, y ,z] = sphere(64); <span class="comment">% sphere object</span>
+fvc = surf2patch(x, y, z, z); <span class="comment">% face, vertex and color data</span>
+pdf_dirs = fvc.vertices; <span class="comment">% directions on a sphere</span>
+
+figure
+plot3(pdf_dirs(:,1),pdf_dirs(:,2),pdf_dirs(:,3), <span class="string">'.'</span>);
+axis <span class="string">equal</span>
+grid <span class="string">on</span>;
+title(<span class="string">'directions on a sphere'</span>);
+
+r0 = 0.5; <span class="comment">% 0.5 of MDD of free water</span>
+rvec = r0 * pdf_dirs;
+qvec = repmat(sqrt(6 * 0.0025 * bval), [1, 3]) .* bvec;
+F = cos(rvec * qvec') / length(bval);  <span class="comment">% Fourier matrix, Eq.5 in [1]</span>
+
+pdf_3d = F * diag(qvol) * data;
+
+pdf_3d_clip = pdf_3d;
+pdf_3d_clip(pdf_3d &lt; 0) = 0; <span class="comment">% clip negative pdf values to 0</span>
+
+pdf_actor = fvc;
+pdf_actor.vertices = fvc.vertices .* repmat(pdf_3d, [1, 3]); <span class="comment">% scale radial distance</span>
+pdf_actor.facevertexcdata = pdf_3d; <span class="comment">% change color data to represent pdf values</span>
+
+<span class="comment">% display pdf contour</span>
+figure
+h = patch(pdf_actor);
+view(0, 0)
+lighting <span class="string">gouraud</span>
+shading <span class="string">faceted</span>
+camlight
+set(h, <span class="string">'EdgeColor'</span>, <span class="string">'none'</span>);
+
+colormap;
+colorbar;
+caxis([min(pdf_3d(:)), max(pdf_3d(:))]);
+
+axis <span class="string">equal</span>, axis <span class="string">off</span>, axis <span class="string">tight</span>
+title([<span class="string">'pdf contour at '</span> num2str(r0) <span class="string">' of MDD of free water'</span>]);
+
+<span class="comment">% display positive pdf contour</span>
+pdf_actor = fvc;
+pdf_actor.vertices = fvc.vertices .* repmat(pdf_3d_clip, [1, 3]); <span class="comment">% scale radial distance</span>
+pdf_actor.facevertexcdata = pdf_3d_clip; <span class="comment">% change color data to represent pdf values</span>
+
+figure
+h = patch(pdf_actor);
+view(0, 0)
+lighting <span class="string">gouraud</span>
+shading <span class="string">faceted</span>
+camlight
+set(h, <span class="string">'EdgeColor'</span>, <span class="string">'none'</span>);
+
+colormap;
+colorbar;
+caxis([min(pdf_3d(:)), max(pdf_3d(:))]);
+
+axis <span class="string">equal</span>, axis <span class="string">off</span>, axis <span class="string">tight</span>
+title([<span class="string">'positive pdf contour at '</span> num2str(r0) <span class="string">' of MDD of free water'</span>]);
+</pre><img vspace="5" hspace="5" src="s_GDSI_tutorial_04.png" alt=""> <img vspace="5" hspace="5" src="s_GDSI_tutorial_05.png" alt=""> <img vspace="5" hspace="5" src="s_GDSI_tutorial_06.png" alt=""> <h2 id="6">reconstruct ODF using direct approach (Fig.9 in [1])</h2><pre class="codeinput">[x, y ,z] = sphere(64); <span class="comment">% sphere object</span>
+fvc = surf2patch(x, y, z, z); <span class="comment">% face, vertex and color data</span>
+odf_dirs = fvc.vertices; <span class="comment">% directions on a sphere</span>
+
+nr = 100;
+rs = linspace(0, 0.8, nr)'; <span class="comment">% 100 distances btw [0, 0.8] of MDD of free water</span>
+R = zeros(length(odf_dirs), length(data));
+qvec = repmat(sqrt(6 * 0.0025 * bval), [1, 3]) .* bvec;
+<span class="keyword">for</span> ii = 1 : nr
+    r = rs(ii);
+    rvec = r * odf_dirs;
+    F = cos(rvec * qvec') / length(bval) * (r^2);
+    R = R + F; <span class="comment">% odf recon matrix R, Eq.9 in [1]</span>
+<span class="keyword">end</span>
+
+odf_direct = R * diag(qvol) * data; <span class="comment">% Eq.9 in [1]</span>
+<span class="comment">% odf_direct(odf_direct &lt; 0) = 0; % clip negative values</span>
+<span class="comment">% odf_direct = odf_direct - min(odf_direct(:)); % remove offset</span>
+
+<span class="comment">% display odf</span>
+odf_actor = fvc;
+odf_actor.vertices = fvc.vertices .* repmat(odf_direct, [1, 3]); <span class="comment">% scale radial distance</span>
+odf_actor.facevertexcdata = odf_direct; <span class="comment">% change color data to represent pdf values</span>
+
+figure
+h = patch(odf_actor);
+view(0, 0)
+lighting <span class="string">gouraud</span>
+shading <span class="string">faceted</span>
+camlight
+set(h, <span class="string">'EdgeColor'</span>, <span class="string">'none'</span>);
+
+colormap;
+colorbar;
+caxis([min(odf_direct(:)), max(odf_direct(:))]);
+
+axis <span class="string">equal</span>, axis <span class="string">off</span>, axis <span class="string">tight</span>
+title(<span class="string">'direct odf'</span>);
+
+<span class="comment">% display component odf at single shell</span>
+<span class="keyword">for</span> ii = 1 : length(bval_uniq)
+    b = bval_uniq(ii);
+    data_shell = data;
+    data_shell(bval_rnd ~= b) = 0;
+    odf_shell = R * diag(qvol) * data_shell;
+
+    odf_actor = fvc;
+    odf_actor.vertices = fvc.vertices .* repmat(odf_shell, [1, 3]); <span class="comment">% scale radial distance</span>
+    odf_actor.facevertexcdata = odf_shell; <span class="comment">% change color data to represent pdf values</span>
+
+    figure
+    h = patch(odf_actor);
+    view(0, 0)
+    lighting <span class="string">gouraud</span>
+    shading <span class="string">faceted</span>
+    camlight
+    set(h, <span class="string">'EdgeColor'</span>, <span class="string">'none'</span>);
+
+    colormap;
+    colorbar;
+    caxis([-0.1, 0.1]);
+
+    axis <span class="string">equal</span>, axis <span class="string">off</span>, axis <span class="string">tight</span>
+    title([<span class="string">'component odf at b='</span> num2str(b)]);
+<span class="keyword">end</span>
+</pre><img vspace="5" hspace="5" src="s_GDSI_tutorial_07.png" alt=""> <img vspace="5" hspace="5" src="s_GDSI_tutorial_08.png" alt=""> <img vspace="5" hspace="5" src="s_GDSI_tutorial_09.png" alt=""> <img vspace="5" hspace="5" src="s_GDSI_tutorial_10.png" alt=""> <img vspace="5" hspace="5" src="s_GDSI_tutorial_11.png" alt=""> <img vspace="5" hspace="5" src="s_GDSI_tutorial_12.png" alt=""> <h2 id="7">reconstruct ODF using indirect approach (Fig.9 in [1])</h2><pre class="codeinput">[x, y ,z] = sphere(64); <span class="comment">% sphere object</span>
+fvc = surf2patch(x, y, z, z); <span class="comment">% face, vertex and color data</span>
+odf_dirs = fvc.vertices; <span class="comment">% directions on a sphere</span>
+
+nr = 100;
+rs = linspace(0, 0.8, nr)'; <span class="comment">% 100 distances btw [0, 1] of MDD of free water</span>
+
+qvec = repmat(sqrt(6 * 0.0025 * bval), [1, 3]) .* bvec;
+pdf = zeros(length(odf_dirs), nr);
+
+<span class="keyword">for</span> ii = 1 : length(odf_dirs)
+    pdf_dir = odf_dirs(ii, :);
+
+    rvec = repmat(pdf_dir, [nr, 1]) .* repmat(rs, [1, 3]);
+    F = cos(rvec * qvec') / length(bval); <span class="comment">% Fourier matrix, Eq.5 in [1]</span>
+
+    pdf_1d = F * diag(qvol) * data; <span class="comment">% Eq.4 in [1]</span>
+    ind_negative = find(pdf_1d &lt; 0);
+    <span class="keyword">if</span> ~isempty(ind_negative)
+        pdf_1d(ind_negative(1):end) = 0; <span class="comment">% set pdf values beyond 1st zero-crossing to 0</span>
+    <span class="keyword">end</span>
+    pdf(ii, :) = pdf_1d;
+<span class="keyword">end</span>
+
+odf_indirect = sum(pdf .* repmat(rs', [length(odf_dirs), 1]), 2);
+odf_indirect(odf_indirect &lt; 0) = 0; <span class="comment">% clip negative values</span>
+odf_indirect = odf_indirect - min(odf_indirect(:)); <span class="comment">% remove offset</span>
+
+<span class="comment">% display odf</span>
+odf_actor = fvc;
+odf_actor.vertices = fvc.vertices .* repmat(odf_indirect, [1, 3]); <span class="comment">% scale radial distance</span>
+odf_actor.facevertexcdata = odf_indirect; <span class="comment">% change color data to represent pdf values</span>
+
+figure
+h = patch(odf_actor);
+view(0, 0)
+lighting <span class="string">gouraud</span>
+shading <span class="string">faceted</span>
+camlight
+set(h, <span class="string">'EdgeColor'</span>, <span class="string">'none'</span>);
+
+colormap;
+colorbar;
+caxis([min(odf_indirect(:)), max(odf_indirect(:))]);
+
+axis <span class="string">equal</span>, axis <span class="string">off</span>, axis <span class="string">tight</span>
+title(<span class="string">'indirect odf'</span>);
+</pre><img vspace="5" hspace="5" src="s_GDSI_tutorial_13.png" alt=""> <p class="footer"><br><a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2018a</a><br></p></div><!--
+##### SOURCE BEGIN #####
+%% introduction
+
+% s_GDSI_tutorial.m
+% 
+%   A tutorial for generalized diffusion spectrum MRI (GDSI) reconstruction.
+%
+%   Source code:
+%       https://github.com/qiyuantian/GDSI/blob/master/s_GDSI_tutorial.m
+%
+%   HTML file can be automatically generaged using command:
+%       publish('s_GDSI_tutorial.m', 'html');
+%
+%   Reference:
+%       [1] Tian Q, Yang G, Leuze C, Rokem A, Edlow BL, McNab JA, Generalized
+%       Diffusion Spectrum Magnetic Resonance Imaging (GDSI) for Model-free
+%       Reconstruction of the Ensemble Average Propagator. NeuroImage, 2019;
+%       189: 497-515.
+%
+% (c) Qiyuan Tian, Stanford RSL
+
+%% prepare diffusion data
+
+% Load a single voxel from MGH-USC HCP data (pink box in Fig.10 in [1]),
+% with 40xb=0, 64xb=1k, 64xb=3k, 128xb=5k, 256xb=10k
+clear, clc, close all
+load('data/multishell_vox.mat'); 
+
+mask_b0 = bval == 0; 
+b0s = data(mask_b0); % b0 volumes
+dwis = data(~mask_b0); % dwi volumes
+
+data = [mean(b0s); dwis]; % average b0 volumes
+data = data / mean(b0s); % normalize using b0
+bval = [0; bval(~mask_b0)]; % new bval
+bvec = [[0, 0, 0]; bvec(~mask_b0, :)]; % new bvec
+
+% display data
+figure
+plot(bval, data, '.');
+grid on;
+title('multi-shell diffusion signal');
+xlabel('b-value (s/mm^2)');
+ylabel('normalized signal');
+
+%% calculate q-space sampling density nonuniformity correction factor (Fig.4b in [1])
+
+bval = bval(:); % column vector
+disp('double check unique b values are:');
+disp(unique(bval)); % note a +/- 50 variance at b=10k
+bval_rnd = round(bval / 200) * 200; % round up bval
+
+bval_uniq = unique(bval_rnd); % unique bval
+count = zeros(size(bval_uniq)); % number of each bval
+for ii = 1 : length(bval_uniq)
+    count(ii) = sum(bval == bval_uniq(ii));
+end
+
+qval_uniq = sqrt(bval_uniq / max(bval_uniq)); % nomalize unique qval, q~sqrt(b)
+qval_contour = (qval_uniq(1 : end-1) + qval_uniq(2 : end)) / 2; % middle contours
+qval_contour = [qval_contour; 2 * qval_uniq(end) - qval_contour(end)]; % extrapolate one outer contour 
+
+qvol_shell = diff(qval_contour .^ 3); % qspace volume associated with each shell
+qvol_shell = [qval_contour(1) .^ 3; qvol_shell]; % add in central sphere volume
+
+qvol_shell = qvol_shell / qvol_shell(1); % normalize central sphere volume to 1
+qvol_samp = qvol_shell ./ count; % qspace volume associated with a sample on a shell
+
+qvol = zeros(size(bval)); % qspace volume for each sample (C in Eq.4 in [1])
+for ii = 1 : length(bval_uniq)
+    b = bval_uniq(ii);
+    qvol(bval == b) = qvol_samp(ii);
+end
+
+% or can be simply computed using shelldens.m
+% qvol = shelldens(bval, 200);
+
+% display correction factor
+figure
+plot(bval_uniq, qvol_samp, '-o');
+grid on;
+ylim([0, 1]);
+title('sampling density nonuniformity correction factor');
+xlabel('b-value (s/mm^2)');
+ylabel('normalized correction factor');
+
+%% reconstruct 1D PDF profile along a specific direction (Fig.5f in [1])
+
+nr = 100;
+rs = linspace(0, 1, nr)'; % 100 distances btw [0, 1] of MDD of free water 
+pdf_dir = [0, 1, 0]; % A-P direction
+
+rvec = repmat(pdf_dir, [nr, 1]) .* repmat(rs, [1, 3]); % 100 displacements along A-P direction
+qvec = repmat(sqrt(6 * 0.0025 * bval), [1, 3]) .* bvec;
+F = cos(rvec * qvec') / length(bval); % Fourier matrix, Eq.5 in [1]
+
+pdf_1d = F * diag(qvol) * data; % Eq.4 in [1]
+
+pdf_1d_clip = pdf_1d;
+pdf_1d_clip(pdf_1d < 0) = 0; % clip negative pdf values to 0
+
+pdf_1d_ringfree = pdf_1d;
+ind_negative = find(pdf_1d < 0);
+pdf_1d_ringfree(ind_negative(1):end) = 0; % set pdf values beyond 1st zero-crossing to 0
+
+% display pdf profile
+figure, hold all
+plot(rs, pdf_1d, 'r', 'LineWidth', 6);
+plot(rs, pdf_1d_clip, 'g', 'LineWidth', 3);
+plot(rs, pdf_1d_ringfree, 'bREPLACE_WITH_DASH_DASH', 'LineWidth', 2);
+grid on;
+legend('original', 'negative clip', '1st zero-xing clip')
+title(['pdf profile along direction ' mat2str(pdf_dir)]);
+xlabel('ratio of mean displacement distance of free water');
+ylabel('diffusion probability density');
+
+%% reconstruct 3D PDF contour at a specific distance (Fig.5j in [1])
+
+[x, y ,z] = sphere(64); % sphere object
+fvc = surf2patch(x, y, z, z); % face, vertex and color data
+pdf_dirs = fvc.vertices; % directions on a sphere
+
+figure
+plot3(pdf_dirs(:,1),pdf_dirs(:,2),pdf_dirs(:,3), '.');
+axis equal
+grid on;
+title('directions on a sphere');
+
+r0 = 0.5; % 0.5 of MDD of free water 
+rvec = r0 * pdf_dirs;
+qvec = repmat(sqrt(6 * 0.0025 * bval), [1, 3]) .* bvec;
+F = cos(rvec * qvec') / length(bval);  % Fourier matrix, Eq.5 in [1]
+
+pdf_3d = F * diag(qvol) * data;
+
+pdf_3d_clip = pdf_3d;
+pdf_3d_clip(pdf_3d < 0) = 0; % clip negative pdf values to 0
+
+pdf_actor = fvc;
+pdf_actor.vertices = fvc.vertices .* repmat(pdf_3d, [1, 3]); % scale radial distance
+pdf_actor.facevertexcdata = pdf_3d; % change color data to represent pdf values
+
+% display pdf contour
+figure
+h = patch(pdf_actor);
+view(0, 0)
+lighting gouraud
+shading faceted
+camlight
+set(h, 'EdgeColor', 'none');
+
+colormap;
+colorbar;
+caxis([min(pdf_3d(:)), max(pdf_3d(:))]);
+
+axis equal, axis off, axis tight
+title(['pdf contour at ' num2str(r0) ' of MDD of free water']);
+
+% display positive pdf contour
+pdf_actor = fvc;
+pdf_actor.vertices = fvc.vertices .* repmat(pdf_3d_clip, [1, 3]); % scale radial distance
+pdf_actor.facevertexcdata = pdf_3d_clip; % change color data to represent pdf values
+
+figure
+h = patch(pdf_actor);
+view(0, 0)
+lighting gouraud
+shading faceted
+camlight
+set(h, 'EdgeColor', 'none');
+
+colormap;
+colorbar;
+caxis([min(pdf_3d(:)), max(pdf_3d(:))]);
+
+axis equal, axis off, axis tight
+title(['positive pdf contour at ' num2str(r0) ' of MDD of free water']);
+
+%% reconstruct ODF using direct approach (Fig.9 in [1])
+
+[x, y ,z] = sphere(64); % sphere object
+fvc = surf2patch(x, y, z, z); % face, vertex and color data
+odf_dirs = fvc.vertices; % directions on a sphere
+
+nr = 100;
+rs = linspace(0, 0.8, nr)'; % 100 distances btw [0, 0.8] of MDD of free water 
+R = zeros(length(odf_dirs), length(data));
+qvec = repmat(sqrt(6 * 0.0025 * bval), [1, 3]) .* bvec;
+for ii = 1 : nr 
+    r = rs(ii);
+    rvec = r * odf_dirs;
+    F = cos(rvec * qvec') / length(bval) * (r^2);
+    R = R + F; % odf recon matrix R, Eq.9 in [1]
+end
+
+odf_direct = R * diag(qvol) * data; % Eq.9 in [1]
+% odf_direct(odf_direct < 0) = 0; % clip negative values
+% odf_direct = odf_direct - min(odf_direct(:)); % remove offset
+
+% display odf
+odf_actor = fvc;
+odf_actor.vertices = fvc.vertices .* repmat(odf_direct, [1, 3]); % scale radial distance
+odf_actor.facevertexcdata = odf_direct; % change color data to represent pdf values
+
+figure
+h = patch(odf_actor);
+view(0, 0)
+lighting gouraud
+shading faceted
+camlight
+set(h, 'EdgeColor', 'none');
+
+colormap;
+colorbar;
+caxis([min(odf_direct(:)), max(odf_direct(:))]);
+
+axis equal, axis off, axis tight
+title('direct odf');
+
+% display component odf at single shell
+for ii = 1 : length(bval_uniq)
+    b = bval_uniq(ii);
+    data_shell = data; 
+    data_shell(bval_rnd ~= b) = 0;
+    odf_shell = R * diag(qvol) * data_shell;
+    
+    odf_actor = fvc;
+    odf_actor.vertices = fvc.vertices .* repmat(odf_shell, [1, 3]); % scale radial distance
+    odf_actor.facevertexcdata = odf_shell; % change color data to represent pdf values
+
+    figure
+    h = patch(odf_actor);
+    view(0, 0)
+    lighting gouraud
+    shading faceted
+    camlight
+    set(h, 'EdgeColor', 'none');
+
+    colormap;
+    colorbar;
+    caxis([-0.1, 0.1]);
+
+    axis equal, axis off, axis tight
+    title(['component odf at b=' num2str(b)]);
+end
+
+%% reconstruct ODF using indirect approach (Fig.9 in [1])
+
+[x, y ,z] = sphere(64); % sphere object
+fvc = surf2patch(x, y, z, z); % face, vertex and color data
+odf_dirs = fvc.vertices; % directions on a sphere
+
+nr = 100;
+rs = linspace(0, 0.8, nr)'; % 100 distances btw [0, 1] of MDD of free water 
+
+qvec = repmat(sqrt(6 * 0.0025 * bval), [1, 3]) .* bvec;
+pdf = zeros(length(odf_dirs), nr);
+
+for ii = 1 : length(odf_dirs)
+    pdf_dir = odf_dirs(ii, :);
+    
+    rvec = repmat(pdf_dir, [nr, 1]) .* repmat(rs, [1, 3]);
+    F = cos(rvec * qvec') / length(bval); % Fourier matrix, Eq.5 in [1]
+
+    pdf_1d = F * diag(qvol) * data; % Eq.4 in [1]
+    ind_negative = find(pdf_1d < 0);
+    if ~isempty(ind_negative)
+        pdf_1d(ind_negative(1):end) = 0; % set pdf values beyond 1st zero-crossing to 0
+    end
+    pdf(ii, :) = pdf_1d;
+end
+
+odf_indirect = sum(pdf .* repmat(rs', [length(odf_dirs), 1]), 2);
+odf_indirect(odf_indirect < 0) = 0; % clip negative values
+odf_indirect = odf_indirect - min(odf_indirect(:)); % remove offset
+
+% display odf
+odf_actor = fvc;
+odf_actor.vertices = fvc.vertices .* repmat(odf_indirect, [1, 3]); % scale radial distance
+odf_actor.facevertexcdata = odf_indirect; % change color data to represent pdf values
+
+figure
+h = patch(odf_actor);
+view(0, 0)
+lighting gouraud
+shading faceted
+camlight
+set(h, 'EdgeColor', 'none');
+
+colormap;
+colorbar;
+caxis([min(odf_indirect(:)), max(odf_indirect(:))]);
+
+axis equal, axis off, axis tight
+title('indirect odf');
+
+
+
+
+
+
+
+
+
+
+
+
+##### SOURCE END #####
+--></body></html>
